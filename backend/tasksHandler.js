@@ -1,9 +1,12 @@
-const AWS = require('aws-sdk');
-const dynamoDb = new AWS.DynamoDB.DocumentClient();
+import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
+import { DynamoDBDocumentClient, ScanCommand, PutCommand, UpdateCommand, DeleteCommand } from "@aws-sdk/lib-dynamodb";
+
+const client = new DynamoDBClient({});
+const dynamoDb = DynamoDBDocumentClient.from(client);
 
 const TASKS_TABLE = process.env.TASKS_TABLE || 'AmityEduTrack_Tasks';
 
-exports.handler = async (event) => {
+export const handler = async (event) => {
     console.log('Received event:', JSON.stringify(event, null, 2));
 
     const path = event.resource;
@@ -28,10 +31,8 @@ exports.handler = async (event) => {
 };
 
 async function getTasks(event) {
-    const params = {
-        TableName: TASKS_TABLE
-    };
-    const result = await dynamoDb.scan(params).promise();
+    const params = { TableName: TASKS_TABLE };
+    const result = await dynamoDb.send(new ScanCommand(params));
     return buildResponse(200, result.Items);
 }
 
@@ -52,7 +53,7 @@ async function createTask(event) {
         Item: newTask
     };
 
-    await dynamoDb.put(params).promise();
+    await dynamoDb.send(new PutCommand(params));
     return buildResponse(201, newTask);
 }
 
@@ -65,7 +66,7 @@ async function updateTask(event) {
         Key: { id: taskId },
         UpdateExpression: 'set completed = :c, title = :t, #d = :date',
         ExpressionAttributeNames: {
-            '#d': 'date' // date is a reserved keyword in DynamoDB sometimes
+            '#d': 'date'
         },
         ExpressionAttributeValues: {
             ':c': body.completed,
@@ -75,7 +76,7 @@ async function updateTask(event) {
         ReturnValues: 'ALL_NEW'
     };
 
-    const result = await dynamoDb.update(params).promise();
+    const result = await dynamoDb.send(new UpdateCommand(params));
     return buildResponse(200, result.Attributes);
 }
 
@@ -87,7 +88,7 @@ async function deleteTask(event) {
         Key: { id: taskId }
     };
 
-    await dynamoDb.delete(params).promise();
+    await dynamoDb.send(new DeleteCommand(params));
     return buildResponse(200, { message: 'Task deleted successfully', id: taskId });
 }
 
