@@ -165,7 +165,6 @@ TCS-ION-AIP-225-INTERNSHIP-PROJECT/
 │   ├── login.png               # Login page screenshot
 │   ├── dashboard.png           # Dashboard screenshot
 │   └── pipeline.png            # CodePipeline screenshot
-├── buildspec.yml               # CodeBuild build specification
 └── README.md                   # This file
 ```
 
